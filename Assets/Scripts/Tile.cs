@@ -7,6 +7,7 @@ public class Tile : MonoBehaviour
     private SpriteRenderer sr;
     public Sprite startSprite;
     public Sprite endSprite;
+    public Sprite defaultSprite;
 
     void Awake()
     {
@@ -37,13 +38,16 @@ public class Tile : MonoBehaviour
         switch (type)
         {
             case TileType.Path:
+                sr.sprite = defaultSprite;
                 sr.color = Color.green;
                 break;
             case TileType.Wall:
+                sr.sprite = defaultSprite;
                 sr.color = Color.black;
                 break;
             case TileType.BorderWall:
-                sr.color = Color.grey;
+                sr.sprite = defaultSprite;
+                sr.color = Color.black;
                 break;
             case TileType.Start:
                 sr.color = Color.white;
