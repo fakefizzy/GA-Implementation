@@ -5,7 +5,7 @@ using System;
 public class GridManager : MonoBehaviour
 {
     public int size = 21;
-    private int width, height;
+    public int width, height;
     public GameObject tilePrefab;
     private Camera mainCamera;
     private GameObject[,] grid;
@@ -15,16 +15,32 @@ public class GridManager : MonoBehaviour
     public bool startExists;
     public bool endExists;
 
-    public float tileSize = 1f;
-
     void Start()
     {
         mainCamera = Camera.main;
         width = size;
         height = size;
-        mainCamera.orthographicSize = (float)size / 2;
+
+        SetupCamera();
         GenerateGrid();
         GenerateMaze();
+    }
+
+    public void SetupCamera()
+    {
+        CameraController existingController = mainCamera.gameObject.GetComponent<CameraController>();
+        if (existingController != null)
+        {
+            Destroy(existingController);
+        }
+
+        mainCamera.orthographicSize = (float)size / 2;
+
+        mainCamera.transform.position = new Vector3(0, 0, -10);
+
+        CameraController controller = mainCamera.gameObject.AddComponent<CameraController>();
+        controller.minZoom = 2.0f;
+        controller.maxZoom = size / 2f + 2;
     }
 
     void Update()
@@ -88,8 +104,12 @@ public class GridManager : MonoBehaviour
 
     public void GenerateGrid()
     {
+        mainCamera.orthographicSize = (float)size / 2;
+
         if (grid != null)
         {
+            startExists = false;
+            endExists = false;
             foreach (GameObject tile in grid)
             {
                 if (tile != null)
@@ -111,11 +131,6 @@ public class GridManager : MonoBehaviour
                 tileObj.transform.parent = transform;
 
                 Tile tile = tileObj.GetComponent<Tile>();
-                if (tile == null)
-                {
-                    Debug.LogError("prefab missing");
-                    continue;
-                }
 
                 if (x == 0 || x == width - 1 || y == 0 || y == height - 1)
                 {
@@ -131,7 +146,7 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    void GenerateMaze()
+    public void GenerateMaze()
     {
         Stack<Vector2Int> stack = new Stack<Vector2Int>();
         Vector2Int startPos = new Vector2Int(1, 1);
@@ -202,7 +217,7 @@ public class GridManager : MonoBehaviour
 
         if (!IsTouchingPath(tilePos))
         {
-            Debug.Log("Border not touching path");
+            Debug.Log("border not touching path");
             return;
         }
 
