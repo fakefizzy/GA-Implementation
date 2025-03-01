@@ -9,9 +9,12 @@ public class ButtonHelper : MonoBehaviour
 {
     private GridManager gridManager;
     public TMPro.TMP_InputField sizeInput;
+    public Slider visualizationSlider;
+    private PathFinder pathFinder;
 
     void Start()
     {
+        pathFinder = FindObjectOfType<PathFinder>();
         gridManager = GameObject.FindWithTag("GridManager").GetComponent<GridManager>();
 
         if (sizeInput != null)
@@ -20,22 +23,31 @@ public class ButtonHelper : MonoBehaviour
 
             sizeInput.onEndEdit.AddListener(ValidateAndSetSize);
         }
+        visualizationSlider.onValueChanged.AddListener(ChangeVisualizationSpeed);
     }
 
     public void ResetGrid()
     {
+        CancelAlgorithm();
         gridManager.SetupCamera();
         gridManager.GenerateGrid();
     }
     public void GenerateMaze()
     {
+        CancelAlgorithm();
         gridManager.SetupCamera();
         gridManager.GenerateGrid();
         gridManager.GenerateMaze();
     }
 
+    public void ChangeVisualizationSpeed(float sliderValue)
+    {
+        pathFinder.SetVisualizationSpeed(sliderValue);
+    }
+
     public void ValidateAndSetSize(string inputText)
     {
+        CancelAlgorithm();
         int newSize;
 
         if (!int.TryParse(inputText, out newSize))
@@ -69,4 +81,40 @@ public class ButtonHelper : MonoBehaviour
 
         sizeInput.text = gridManager.size.ToString();
     }
+
+    public void ClearGrid()
+    {
+        CancelAlgorithm();
+        gridManager.MakeAllTilesPath();
+    }
+
+    public void CancelAlgorithm() 
+    { 
+        pathFinder.CancelPathfinding();
+    }
+
+    public void StartBFS()
+    {
+        CancelAlgorithm();
+        pathFinder.StartPathfinding(PathFinder.Algorithm.BFS);
+    }
+
+    public void StartDFS()
+    {
+        CancelAlgorithm();
+        pathFinder.StartPathfinding(PathFinder.Algorithm.DFS);
+    }
+
+    public void StartDijkstra()
+    {
+        CancelAlgorithm();
+        pathFinder.StartPathfinding(PathFinder.Algorithm.Dijkstra);
+    }
+
+    public void StartAStar()
+    {
+        CancelAlgorithm();
+        pathFinder.StartPathfinding(PathFinder.Algorithm.AStar);
+    }
+
 }

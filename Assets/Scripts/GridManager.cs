@@ -4,20 +4,27 @@ using System;
 
 public class GridManager : MonoBehaviour
 {
+    public GameObject tilePrefab;
+    private GameObject[,] grid;
+
+    private PathFinder pathFinder;
+    private Camera mainCamera;
+
     public int size = 21;
     public int width, height;
-    public GameObject tilePrefab;
-    private Camera mainCamera;
-    private GameObject[,] grid;
+
     private bool isDragging = false;
-    private Tile.TileType currentDragType;
-    private System.Random rand = new System.Random();
     public bool startExists;
     public bool endExists;
 
+    private System.Random rand = new System.Random();
+    private Tile.TileType currentDragType;
+
     void Start()
     {
+        pathFinder = FindObjectOfType<PathFinder>();
         mainCamera = Camera.main;
+
         width = size;
         height = size;
 
@@ -45,45 +52,48 @@ public class GridManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if (!pathFinder.isSearching)
         {
-            Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-
-            if (hit.collider != null)
+            if (Input.GetMouseButtonDown(0))
             {
-                Tile tile = hit.collider.GetComponent<Tile>();
+                Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+                RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
 
-                if (tile != null)
+                if (hit.collider != null)
                 {
-                    if (tile.type == Tile.TileType.BorderWall || tile.type == Tile.TileType.Start || tile.type == Tile.TileType.End)
+                    Tile tile = hit.collider.GetComponent<Tile>();
+
+                    if (tile != null)
                     {
-                        HandleBorderClick(hit);
-                    }
-                    else
-                    {
-                        isDragging = true;
-                        currentDragType = Tile.TileType.Path;
-                        HandleTileClick();
+                        if (tile.type == Tile.TileType.BorderWall || tile.type == Tile.TileType.Start || tile.type == Tile.TileType.End)
+                        {
+                            HandleBorderClick(hit);
+                        }
+                        else
+                        {
+                            isDragging = true;
+                            currentDragType = Tile.TileType.Path;
+                            HandleTileClick();
+                        }
                     }
                 }
             }
-        }
-        else if (Input.GetMouseButtonDown(1))
-        {
-            isDragging = true;
-            currentDragType = Tile.TileType.Wall;
-            HandleTileClick();
-        }
+            else if (Input.GetMouseButtonDown(1))
+            {
+                isDragging = true;
+                currentDragType = Tile.TileType.Wall;
+                HandleTileClick();
+            }
 
-        if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
-        {
-            isDragging = false;
-        }
+            if (Input.GetMouseButtonUp(0) || Input.GetMouseButtonUp(1))
+            {
+                isDragging = false;
+            }
 
-        if (isDragging)
-        {
-            HandleTileClick();
+            if (isDragging)
+            {
+                HandleTileClick();
+            }
         }
     }
 
@@ -120,7 +130,7 @@ public class GridManager : MonoBehaviour
         }
 
         grid = new GameObject[width, height];
-        Vector2 gridOffset = new Vector2(width / 2f - 0.5f, height / 2f - 0.5f);
+        Vector2 gridOffset = new(width / 2f - 0.5f, height / 2f - 0.5f);
 
         for (int x = 0; x < width; x++)
         {
@@ -149,7 +159,7 @@ public class GridManager : MonoBehaviour
     public void GenerateMaze()
     {
         Stack<Vector2Int> stack = new Stack<Vector2Int>();
-        Vector2Int startPos = new Vector2Int(1, 1);
+        Vector2Int startPos = new(1, 1);
         stack.Push(startPos);
 
         Tile startTile = GetTileAt(startPos);
@@ -248,6 +258,25 @@ public class GridManager : MonoBehaviour
         {
             endExists = false;
             tile.ChangeTileType(Tile.TileType.BorderWall);
+        }
+    }
+
+    public void MakeAllTilesPath()
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int y = 0; y < height; y++)
+            {
+                GameObject tileObj = grid[x, y];
+                if (tileObj != null)
+                {
+                    Tile tile = tileObj.GetComponent<Tile>();
+                    if (tile != null && tile.type != Tile.TileType.BorderWall && tile.type != Tile.TileType.Start && tile.type != Tile.TileType.End)
+                    {
+                        tile.ChangeTileType(Tile.TileType.Path);
+                    }
+                }
+            }
         }
     }
 
