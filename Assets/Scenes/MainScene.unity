@@ -245,6 +245,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   size: 21
   tilePrefab: {fileID: 7865159293107952511, guid: 79981f838228fea4fbf57aded30495c5, type: 3}
+  startExists: 0
+  endExists: 0
   tileSize: 1
 --- !u!4 &1757296414
 Transform:

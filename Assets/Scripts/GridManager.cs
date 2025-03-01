@@ -1,15 +1,20 @@
+using System.Collections.Generic;
 using UnityEngine;
+using static Tile;
 
 public class GridManager : MonoBehaviour
 {
     public int size = 21;
-    int width;
-    int height;
+    private int width, height;
     public GameObject tilePrefab;
     private Camera mainCamera;
     private GameObject[,] grid;
     private bool isDragging = false;
     private Tile.TileType currentDragType;
+    private System.Random rand = new System.Random();
+    public bool startExists;
+    public bool endExists;
+
 
     public float tileSize = 1f;
 
@@ -17,17 +22,33 @@ public class GridManager : MonoBehaviour
     {
         mainCamera = Camera.main;
         width = size; height = size;
-        mainCamera.orthographicSize =  (float)size / 2;
+        mainCamera.orthographicSize = (float)size / 2;
         GenerateGrid();
+        GenerateMaze();
     }
 
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
         {
-            isDragging = true;
-            currentDragType = Tile.TileType.Path;
-            HandleTileClick();
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
+            if (hit.collider != null)
+            {
+                Tile tile = hit.collider.GetComponent<Tile>();
+
+                if (tile != null && tile.type == Tile.TileType.BorderWall || tile.type == Tile.TileType.Start || tile.type == Tile.TileType.End)
+                {
+                    HandleBorderClick();
+                }
+                else
+                {
+                    isDragging = true;
+                    currentDragType = Tile.TileType.Path;
+                    HandleTileClick();
+                }
+            }
         }
         else if (Input.GetMouseButtonDown(1))
         {
@@ -47,20 +68,20 @@ public class GridManager : MonoBehaviour
         }
     }
 
-void HandleTileClick()
-{
-    Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-    RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
-
-    if (hit.collider != null)
+    void HandleTileClick()
     {
-        Tile tile = hit.collider.GetComponent<Tile>();
-        if (tile != null && tile.type != Tile.TileType.BorderWall)
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
+        if (hit.collider != null)
         {
-            tile.ChangeTileType(currentDragType);
+            Tile tile = hit.collider.GetComponent<Tile>();
+            if (tile != null && tile.type != Tile.TileType.BorderWall && tile.type != TileType.Start && tile.type != TileType.End)
+            {
+                tile.ChangeTileType(currentDragType);
+            }
         }
     }
-}
 
 
     public void GenerateGrid()
@@ -92,11 +113,89 @@ void HandleTileClick()
                 }
                 else
                 {
-                    tile.type = Tile.TileType.Path;
+                    tile.type = Tile.TileType.Wall;
                 }
 
                 grid[x, y] = tileObj;
             }
+        }
+    }
+
+    void GenerateMaze()
+    {
+        Stack<Vector2Int> stack = new Stack<Vector2Int>();
+        Vector2Int startPos = new Vector2Int(1, 1);
+        stack.Push(startPos);
+
+        while (stack.Count > 0)
+        {
+            Vector2Int current = stack.Pop();
+            List<Vector2Int> neighbors = GetValidNeighbors(current);
+
+            if (neighbors.Count > 0)
+            {
+                stack.Push(current);
+                Vector2Int next = neighbors[rand.Next(neighbors.Count)];
+                RemoveWallBetween(current, next);
+                stack.Push(next);
+            }
+        }
+    }
+
+    List<Vector2Int> GetValidNeighbors(Vector2Int pos)
+    {
+        List<Vector2Int> neighbors = new List<Vector2Int>();
+        Vector2Int[] directions = { Vector2Int.up * 2, Vector2Int.down * 2, Vector2Int.left * 2, Vector2Int.right * 2 };
+
+        foreach (var dir in directions)
+        {
+            Vector2Int neighbor = pos + dir;
+            if (neighbor.x > 0 && neighbor.y > 0 && neighbor.x < width - 1 && neighbor.y < height - 1)
+            {
+                Tile tile = grid[neighbor.x, neighbor.y].GetComponent<Tile>();
+                if (tile.type == Tile.TileType.Wall)
+                {
+                    neighbors.Add(neighbor);
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    void RemoveWallBetween(Vector2Int a, Vector2Int b)
+    {
+        Vector2Int wallPos = (a + b) / 2;
+        grid[a.x, a.y].GetComponent<Tile>().ChangeTileType(Tile.TileType.Path);
+        grid[b.x, b.y].GetComponent<Tile>().ChangeTileType(Tile.TileType.Path);
+        grid[wallPos.x, wallPos.y].GetComponent<Tile>().ChangeTileType(Tile.TileType.Path);
+    }
+
+    void HandleBorderClick()
+    {
+        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        RaycastHit2D hit = Physics2D.Raycast(mousePos, Vector2.zero);
+
+        Tile tile = hit.collider.GetComponent<Tile>();
+
+        if (!startExists)
+        {
+            startExists = true;
+            tile.ChangeTileType(Tile.TileType.Start);
+        }
+        else if (tile.type == Tile.TileType.Start)
+        {
+            startExists = false;
+            tile.ChangeTileType(Tile.TileType.BorderWall);
+        } 
+        else if (!endExists)
+        {
+            endExists = true;
+            tile.ChangeTileType(Tile.TileType.End);
+        }
+        else if (tile.type == Tile.TileType.End)
+        {
+            endExists = false;
+            tile.ChangeTileType(Tile.TileType.BorderWall);
         }
     }
 }

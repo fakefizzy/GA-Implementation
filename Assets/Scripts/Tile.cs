@@ -2,10 +2,11 @@ using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
-    public enum TileType { Path, Wall, BorderWall }
-    public TileType type = TileType.Path;
-
+    public enum TileType { Path, Wall, BorderWall, Start, End }
+    public TileType type;
     private SpriteRenderer sr;
+    public Sprite startSprite;
+    public Sprite endSprite;
 
     void Awake()
     {
@@ -19,7 +20,6 @@ public class Tile : MonoBehaviour
 
     public void ChangeTileType(TileType newType)
     {
-        if (type == TileType.BorderWall) return;
         type = newType;
         UpdateColor();
     }
@@ -43,7 +43,15 @@ public class Tile : MonoBehaviour
                 sr.color = Color.black;
                 break;
             case TileType.BorderWall:
-                sr.color = Color.black;
+                sr.color = Color.grey;
+                break;
+            case TileType.Start:
+                sr.color = Color.white;
+                sr.sprite = startSprite;
+                break;
+            case TileType.End:
+                sr.color = Color.white;
+                sr.sprite = endSprite;
                 break;
         }
     }
