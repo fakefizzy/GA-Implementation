@@ -55,7 +55,7 @@ public class CameraController : MonoBehaviour
 
             float panMultiplier = mainCamera.orthographicSize / 10.0f;
 
-            Vector3 moveDirection = new Vector3(
+            Vector3 moveDirection = new(
                 -mouseDelta.x * panSpeed * panMultiplier * Time.deltaTime,
                 -mouseDelta.y * panSpeed * panMultiplier * Time.deltaTime,
                 0

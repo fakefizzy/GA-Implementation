@@ -52,9 +52,8 @@ public class ButtonHelper : MonoBehaviour
     public void ValidateAndSetSize(string inputText)
     {
         CancelAlgorithm();
-        int newSize;
 
-        if (!int.TryParse(inputText, out newSize))
+        if (!int.TryParse(inputText, out int newSize))
         {
             sizeInput.text = gridManager.size.ToString();
             return;

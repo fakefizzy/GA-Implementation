@@ -18,7 +18,7 @@ public class GridManager : MonoBehaviour
     public bool startExists;
     public bool endExists;
 
-    private System.Random rand = new System.Random();
+    private readonly System.Random rand = new();
     private Tile.TileType currentDragType;
 
     void Start()
@@ -45,7 +45,7 @@ public class GridManager : MonoBehaviour
 
         mainCamera.orthographicSize = (float)size / 2;
 
-        mainCamera.transform.position = new Vector3(0, 0, -10);
+        mainCamera.transform.position = new Vector3(10, 10, -10);
 
         CameraController controller = mainCamera.gameObject.AddComponent<CameraController>();
         controller.minZoom = 2.0f;
@@ -132,13 +132,12 @@ public class GridManager : MonoBehaviour
         }
 
         grid = new GameObject[width, height];
-        Vector2 gridOffset = new(width / 2f - 0.5f, height / 2f - 0.5f);
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
-                Vector2 position = new Vector2(x, y) - gridOffset;
+                Vector2 position = new Vector2(x, y);
                 GameObject tileObj = Instantiate(tilePrefab, position, Quaternion.identity);
                 tileObj.transform.parent = transform;
 
@@ -160,7 +159,7 @@ public class GridManager : MonoBehaviour
 
     public void GenerateMaze()
     {
-        Stack<Vector2Int> stack = new Stack<Vector2Int>();
+        Stack<Vector2Int> stack = new();
         Vector2Int startPos = new(1, 1);
         stack.Push(startPos);
 
@@ -173,49 +172,23 @@ public class GridManager : MonoBehaviour
         while (stack.Count > 0)
         {
             Vector2Int current = stack.Pop();
-            List<Vector2Int> neighbors = GetValidNeighbors(current);
+            List<Vector2Int> neighbors = GetValidNeighbors(current, Tile.TileType.Wall);
 
             if (neighbors.Count > 0)
             {
                 stack.Push(current);
                 Vector2Int next = neighbors[rand.Next(neighbors.Count)];
-                RemoveWallBetween(current, next);
+
+                Tile currentTile = GetTileAt(current);
+                Tile nextTile = GetTileAt(next);
+                Tile tileWall = GetTileAt((current + next) / 2);
+                if (currentTile != null) currentTile.ChangeTileType(Tile.TileType.Path);
+                if (nextTile != null) nextTile.ChangeTileType(Tile.TileType.Path);
+                if (tileWall != null) tileWall.ChangeTileType(Tile.TileType.Path);
+
                 stack.Push(next);
             }
         }
-    }
-
-    List<Vector2Int> GetValidNeighbors(Vector2Int pos)
-    {
-        List<Vector2Int> neighbors = new List<Vector2Int>();
-        Vector2Int[] directions = { Vector2Int.up * 2, Vector2Int.down * 2, Vector2Int.left * 2, Vector2Int.right * 2 };
-
-        foreach (var dir in directions)
-        {
-            Vector2Int neighbor = pos + dir;
-            if (IsInBounds(neighbor) && neighbor.x > 0 && neighbor.y > 0 && neighbor.x < width - 1 && neighbor.y < height - 1)
-            {
-                Tile tile = GetTileAt(neighbor);
-                if (tile != null && tile.type == Tile.TileType.Wall)
-                {
-                    neighbors.Add(neighbor);
-                }
-            }
-        }
-        return neighbors;
-    }
-
-    void RemoveWallBetween(Vector2Int a, Vector2Int b)
-    {
-        Vector2Int wallPos = (a + b) / 2;
-
-        Tile tileA = GetTileAt(a);
-        Tile tileB = GetTileAt(b);
-        Tile tileWall = GetTileAt(wallPos);
-
-        if (tileA != null) tileA.ChangeTileType(Tile.TileType.Path);
-        if (tileB != null) tileB.ChangeTileType(Tile.TileType.Path);
-        if (tileWall != null) tileWall.ChangeTileType(Tile.TileType.Path);
     }
 
     void HandleBorderClick(RaycastHit2D hit)
@@ -302,7 +275,47 @@ public class GridManager : MonoBehaviour
         return false;
     }
 
-    Tile GetTileAt(Vector2Int pos)
+    public List<Vector2Int> GetValidNeighbors(Vector2Int pos, Tile.TileType tileType)
+    {
+        List<Vector2Int> neighbors = new();
+        Vector2Int[] directions;
+
+        if (tileType == Tile.TileType.Wall)
+        {
+            //for maze generation
+            directions = new[] { Vector2Int.up * 2, Vector2Int.down * 2, Vector2Int.left * 2, Vector2Int.right * 2 };
+        }
+        else
+        {
+            //for path exploration
+            directions = new[] { Vector2Int.up, Vector2Int.right, Vector2Int.down, Vector2Int.left };
+        }
+
+
+        foreach (var dir in directions)
+        {
+            Vector2Int neighbor = pos + dir;
+            if (IsInBounds(neighbor) && neighbor.x > 0 && neighbor.y > 0 && neighbor.x < width - 1 && neighbor.y < height - 1)
+            {
+                Tile tile = GetTileAt(neighbor);
+                if (tile != null && tile.type == tileType)
+                {
+                    neighbors.Add(neighbor);
+                }
+            }
+            else //For pathfinding
+            {
+                Tile tile = GetTileAt(neighbor);
+                if (tile != null && tile.type == Tile.TileType.End && tileType == Tile.TileType.Path) 
+                {
+                    neighbors.Add(neighbor);
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    public Tile GetTileAt(Vector2Int pos)
     {
         if (!IsInBounds(pos)) return null;
 
@@ -320,8 +333,8 @@ public class GridManager : MonoBehaviour
     Vector2Int Vector2IntFromPosition(Vector3 position)
     {
         return new Vector2Int(
-            Mathf.RoundToInt(position.x + width / 2f - 0.5f),
-            Mathf.RoundToInt(position.y + height / 2f - 0.5f)
+            Mathf.RoundToInt(position.x),
+            Mathf.RoundToInt(position.y)
         );
     }
 }
