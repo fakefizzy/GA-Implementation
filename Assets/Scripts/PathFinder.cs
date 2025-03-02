@@ -1,8 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
-using System.IO;
+using Utils;
 
 public class PathFinder : MonoBehaviour
 {
@@ -65,8 +64,6 @@ public class PathFinder : MonoBehaviour
         Queue<Vector2Int> queue = new();
         Dictionary<Vector2Int, Vector2Int> cameFrom = new();
         HashSet<Vector2Int> visited = new();
-        List<Vector2Int> path = null;
-        bool pathFound = false;
 
         queue.Enqueue(startPos);
         visited.Add(startPos);
@@ -78,11 +75,11 @@ public class PathFinder : MonoBehaviour
 
             VisualizeVisited(current);
             yield return new WaitForSeconds(visualizationDelay);
-
-            if (current == endPos && !pathFound)
+            if (current == endPos)
             {
-                pathFound = true;
-                path = ReconstructPath(cameFrom, startPos, endPos);
+                yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
+                isSearching = false;
+                yield break;
             }
 
             foreach (var neighbor in gridManager.GetValidNeighbors(current, Tile.TileType.Path))
@@ -96,15 +93,7 @@ public class PathFinder : MonoBehaviour
             }
         }
 
-        if (pathFound)
-        {
-            yield return StartCoroutine(VisualizePath(path));
-        }
-        else
-        {
-            buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with BFS");
-        }
-
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with BFS");
         isSearching = false;
     }
 
@@ -115,9 +104,6 @@ public class PathFinder : MonoBehaviour
         Stack<Vector2Int> stack = new();
         Dictionary<Vector2Int, Vector2Int> cameFrom = new();
         HashSet<Vector2Int> visited = new();
-
-        List<Vector2Int> path = null;
-        bool pathFound = false;
 
         stack.Push(startPos);
 
@@ -132,17 +118,20 @@ public class PathFinder : MonoBehaviour
 
                 yield return new WaitForSeconds(visualizationDelay);
 
-                if (current == endPos && !pathFound)
-                {
-                    pathFound = true;
-                    path = ReconstructPath(cameFrom, startPos, endPos);
-                }
-
                 List<Vector2Int> neighbors = gridManager.GetValidNeighbors(current, Tile.TileType.Path);
 
                 for (int i = neighbors.Count - 1; i >= 0; i--)
                 {
                     Vector2Int neighbor = neighbors[i];
+
+                    if (neighbor == endPos)
+                    {
+                        cameFrom[neighbor] = current;
+                        yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
+                        isSearching = false;
+                        yield break;
+                    }
+
                     if (!visited.Contains(neighbor))
                     {
                         stack.Push(neighbor);
@@ -152,45 +141,29 @@ public class PathFinder : MonoBehaviour
             }
         }
 
-        if (pathFound)
-        {
-            yield return StartCoroutine(VisualizePath(path));
-        }
-        else
-        {
-            buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with DFS");
-        }
-
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with DFS");
         isSearching = false;
     }
 
 
-    private IEnumerator Dijkstra() //basically BFS in an unweighted graph
+    private IEnumerator Dijkstra() //Basically BFS if in an unweighted graph
     {
         var (startPos, endPos) = FindStartAndEndTiles();
 
-        List<(Vector2Int pos, float cost)> frontier = new() { (startPos, 0) };
+        PriorityQueue<Vector2Int, float> frontier = new();
         Dictionary<Vector2Int, Vector2Int> cameFrom = new();
         Dictionary<Vector2Int, float> costSoFar = new();
 
+        frontier.Enqueue(startPos, 0);
         cameFrom[startPos] = startPos;
         costSoFar[startPos] = 0;
 
         while (frontier.Count > 0)
         {
-            int lowestIndex = 0;
-            for (int i = 1; i < frontier.Count; i++)
-            {
-                if (frontier[i].cost < frontier[lowestIndex].cost)
-                    lowestIndex = i;
-            }
-
-            Vector2Int current = frontier[lowestIndex].pos;
-            frontier.RemoveAt(lowestIndex);
+            Vector2Int current = frontier.Dequeue();
 
             VisualizeVisited(current);
             yield return new WaitForSeconds(visualizationDelay);
-
             if (current == endPos)
             {
                 yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
@@ -203,14 +176,12 @@ public class PathFinder : MonoBehaviour
                 float movementCost = GetMovementCost(current, neighbor);
                 float newCost = costSoFar[current] + movementCost;
 
-                if (costSoFar.ContainsKey(neighbor) && newCost >= costSoFar[neighbor])
+                if (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor])
                 {
-                    continue;
+                    costSoFar[neighbor] = newCost;
+                    cameFrom[neighbor] = current;
+                    frontier.Enqueue(neighbor, newCost);
                 }
-
-                costSoFar[neighbor] = newCost;
-                frontier.Add((neighbor, newCost));
-                cameFrom[neighbor] = current;
             }
         }
 
@@ -218,19 +189,22 @@ public class PathFinder : MonoBehaviour
         isSearching = false;
     }
 
+
     private IEnumerator AStar()
     {
         var (startPos, endPos) = FindStartAndEndTiles();
 
-        List<(Vector2Int pos, float priority)> frontier = new() { (startPos, 0) };
-        Dictionary<Vector2Int, Vector2Int> cameFrom = new() { [startPos] = startPos };
-        Dictionary<Vector2Int, float> costSoFar = new() { [startPos] = 0 };
+        PriorityQueue<Vector2Int, float> frontier = new();
+        Dictionary<Vector2Int, Vector2Int> cameFrom = new();
+        Dictionary<Vector2Int, float> costSoFar = new();
+
+        frontier.Enqueue(startPos, 0);
+        cameFrom[startPos] = startPos;
+        costSoFar[startPos] = 0;
 
         while (frontier.Count > 0)
         {
-             frontier.Sort((a, b) => a.priority.CompareTo(b.priority));
-            Vector2Int current = frontier[0].pos;
-            frontier.RemoveAt(0);
+            Vector2Int current = frontier.Dequeue();
 
             VisualizeVisited(current);
             yield return new WaitForSeconds(visualizationDelay);
@@ -247,23 +221,20 @@ public class PathFinder : MonoBehaviour
                 float movementCost = GetMovementCost(current, neighbor);
                 float newCost = costSoFar[current] + movementCost;
 
-                if (costSoFar.ContainsKey(neighbor) && newCost >= costSoFar[neighbor])
+                if (!costSoFar.ContainsKey(neighbor) || newCost < costSoFar[neighbor])
                 {
-                    continue;
+                    costSoFar[neighbor] = newCost;
+                    float priority = newCost + Heuristic(neighbor, endPos) + 0.0001f * neighbor.x;
+                    frontier.Enqueue(neighbor, priority);
+                    cameFrom[neighbor] = current;
                 }
-
-                costSoFar[neighbor] = newCost;
-                float priority = newCost + Heuristic(neighbor, endPos);
-
-                frontier.RemoveAll(x => x.pos == neighbor);
-                frontier.Add((neighbor, priority));
-                cameFrom[neighbor] = current;
             }
         }
 
         buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with A*");
         isSearching = false;
     }
+
 
     private float GetMovementCost(Vector2Int from, Vector2Int to)
     {
