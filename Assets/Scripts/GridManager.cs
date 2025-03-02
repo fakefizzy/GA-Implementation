@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 
 public class GridManager : MonoBehaviour
 {
@@ -43,13 +42,16 @@ public class GridManager : MonoBehaviour
             Destroy(existingController);
         }
 
-        mainCamera.orthographicSize = (float)size / 2;
+        mainCamera.orthographicSize = (size / 2f) + 2f;
 
-        mainCamera.transform.position = new Vector3(10, 10, -10);
+        float centerX = (width - 1) / 2f;
+        float centerY = (height - 1) / 2f;
+
+        mainCamera.transform.position = new Vector3(centerX, centerY, -10);
 
         CameraController controller = mainCamera.gameObject.AddComponent<CameraController>();
         controller.minZoom = 2.0f;
-        controller.maxZoom = size / 2f + 2;
+        controller.maxZoom = (size / 2f) + 2f;
     }
 
     void Update()
@@ -116,8 +118,6 @@ public class GridManager : MonoBehaviour
 
     public void GenerateGrid()
     {
-        mainCamera.orthographicSize = (float)size / 2;
-
         if (grid != null)
         {
             startExists = false;

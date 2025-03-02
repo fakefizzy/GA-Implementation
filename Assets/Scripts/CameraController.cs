@@ -3,8 +3,8 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     public float zoomSpeed = 1.0f;
-    public float minZoom = 2.0f;
-    public float maxZoom = 30.0f;
+    public float minZoom;
+    public float maxZoom;
 
     public float panSpeed = 15.0f;
     private bool isPanning = false;
