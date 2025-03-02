@@ -13,9 +13,11 @@ public class PathFinder : MonoBehaviour
     private Color pathColor = new Color(0.3f, 0.7f, 1f); //light blue
     private Color visitedColor = new Color(0.9f, 0.7f, 1f); //light purple
     private float visualizationDelay = 0.5f;
+    private ButtonHelper buttonHelper;
 
     private void Start()
     {
+        buttonHelper = FindObjectOfType<ButtonHelper>();
         gridManager = GameObject.FindWithTag("GridManager").GetComponent<GridManager>();
     }
 
@@ -24,7 +26,7 @@ public class PathFinder : MonoBehaviour
         if (isSearching) return;
         if (!gridManager.startExists || !gridManager.endExists)
         {
-            Debug.LogWarning("no start or end");
+            buttonHelper.LogWarning($"[{System.DateTime.Now}] Start or end missing!");
             return;
         }
 
@@ -50,11 +52,14 @@ public class PathFinder : MonoBehaviour
 
     private void ClearPreviousPath()
     {
+        bool typeChanged = false;
+
         foreach (var tile in visitedTiles)
         {
             if (tile != null && tile.type != Tile.TileType.Start && tile.type != Tile.TileType.End)
             {
                 tile.ChangeTileType(Tile.TileType.Path);
+                typeChanged = true;
             }
         }
         visitedTiles.Clear();
@@ -64,9 +69,14 @@ public class PathFinder : MonoBehaviour
             if (tile != null && tile.type != Tile.TileType.Start && tile.type != Tile.TileType.End)
             {
                 tile.ChangeTileType(Tile.TileType.Path);
+                typeChanged = true;
             }
         }
         pathTiles.Clear();
+        if (typeChanged)
+        {
+            buttonHelper.LogWarning($"[{System.DateTime.Now}] Previous path cleaned");
+        }
     }
 
     private (Tile startTile, Tile endTile, Vector2Int startPos, Vector2Int endPos) FindStartAndEndTiles()
@@ -225,7 +235,7 @@ public class PathFinder : MonoBehaviour
             }
         }
 
-        Debug.Log("no path with BFS");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with BFS");
         isSearching = false;
     }
 
@@ -266,7 +276,7 @@ public class PathFinder : MonoBehaviour
             }
         }
 
-        Debug.Log("no path with DFS");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with DFS");
         isSearching = false;
     }
 
@@ -313,7 +323,7 @@ public class PathFinder : MonoBehaviour
             }
         }
 
-        Debug.Log("no path with Dijkstra");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with Dijkstra");
         isSearching = false;
     }
 
@@ -362,7 +372,7 @@ public class PathFinder : MonoBehaviour
             }
         }
 
-        Debug.Log("No path found with A*");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with A*");
         isSearching = false;
     }
 
@@ -400,9 +410,7 @@ public class PathFinder : MonoBehaviour
         {
             StopAllCoroutines();
             isSearching = false;
-            Debug.Log("pathfinding cancelled");
+            buttonHelper.LogWarning($"[{System.DateTime.Now}] Pathfinding cancelled");
         }
     }
-
-    //todo double check algorithms, logging panel on the left
 }

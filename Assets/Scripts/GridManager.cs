@@ -9,6 +9,7 @@ public class GridManager : MonoBehaviour
 
     private PathFinder pathFinder;
     private Camera mainCamera;
+    private ButtonHelper buttonHelper;
 
     public int size = 21;
     public int width, height;
@@ -23,6 +24,7 @@ public class GridManager : MonoBehaviour
     void Start()
     {
         pathFinder = FindObjectOfType<PathFinder>();
+        buttonHelper = FindObjectOfType<ButtonHelper>();
         mainCamera = Camera.main;
 
         width = size;
@@ -227,7 +229,7 @@ public class GridManager : MonoBehaviour
 
         if (!IsTouchingPath(tilePos))
         {
-            Debug.Log("border not touching path");
+            buttonHelper.LogWarning($"[{System.DateTime.Now}] Selected border wall not touching path!");
             return;
         }
 

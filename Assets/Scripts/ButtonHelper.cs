@@ -11,6 +11,7 @@ public class ButtonHelper : MonoBehaviour
     public TMPro.TMP_InputField sizeInput;
     public Slider visualizationSlider;
     private PathFinder pathFinder;
+    public TMPro.TMP_Text logField;
 
     void Start()
     {
@@ -30,6 +31,7 @@ public class ButtonHelper : MonoBehaviour
     {
         CancelAlgorithm();
         gridManager.SetupCamera();
+        LogWarning($"[{System.DateTime.Now}] Grid reset");
         gridManager.GenerateGrid();
     }
     public void GenerateMaze()
@@ -37,11 +39,13 @@ public class ButtonHelper : MonoBehaviour
         CancelAlgorithm();
         gridManager.SetupCamera();
         gridManager.GenerateGrid();
+        LogWarning($"[{System.DateTime.Now}] Maze generated");
         gridManager.GenerateMaze();
     }
 
     public void ChangeVisualizationSpeed(float sliderValue)
     {
+        LogWarning($"[{System.DateTime.Now}] New visualization speed {sliderValue} set");
         pathFinder.SetVisualizationSpeed(sliderValue);
     }
 
@@ -77,6 +81,7 @@ public class ButtonHelper : MonoBehaviour
             gridManager.height = newSize;
             gridManager.SetupCamera();
             gridManager.GenerateGrid();
+            LogWarning($"[{System.DateTime.Now}] Grid size changed to {newSize}");
         }
 
         sizeInput.text = gridManager.size.ToString();
@@ -85,6 +90,7 @@ public class ButtonHelper : MonoBehaviour
     public void ClearGrid()
     {
         CancelAlgorithm();
+        LogWarning($"[{System.DateTime.Now}] Grid cleared");
         gridManager.MakeAllTilesPath();
     }
 
@@ -96,25 +102,35 @@ public class ButtonHelper : MonoBehaviour
     public void StartBFS()
     {
         CancelAlgorithm();
+        LogWarning($"[{System.DateTime.Now}] BFS started");
         pathFinder.StartPathfinding(PathFinder.Algorithm.BFS);
     }
 
     public void StartDFS()
     {
         CancelAlgorithm();
+        LogWarning($"[{System.DateTime.Now}] DFS started");
         pathFinder.StartPathfinding(PathFinder.Algorithm.DFS);
     }
 
     public void StartDijkstra()
     {
         CancelAlgorithm();
+        LogWarning($"[{System.DateTime.Now}] Dijkstra started");
         pathFinder.StartPathfinding(PathFinder.Algorithm.Dijkstra);
     }
 
     public void StartAStar()
     {
         CancelAlgorithm();
+        LogWarning($"[{System.DateTime.Now}] A* started");
         pathFinder.StartPathfinding(PathFinder.Algorithm.AStar);
+    }
+
+
+    public void LogWarning(string warning)
+    {
+        logField.text = warning + "\n"+ logField.text;
     }
 
 }
