@@ -306,6 +306,7 @@ public class GridManager : MonoBehaviour
             else //For pathfinding
             {
                 Tile tile = GetTileAt(neighbor);
+                //tileType being the type of tile being looked for (path encompassing end as well), tile.type is the type of the neighbor tile
                 if (tile != null && tile.type == Tile.TileType.End && tileType == Tile.TileType.Path) 
                 {
                     neighbors.Add(neighbor);
