@@ -41,7 +41,6 @@ public class ButtonHelper : MonoBehaviour
 
     public void ChangeVisualizationSpeed(float sliderValue)
     {
-        LogWarning($"[{System.DateTime.Now}] New visualization speed {sliderValue} set");
         pathFinder.SetVisualizationSpeed(sliderValue);
     }
 

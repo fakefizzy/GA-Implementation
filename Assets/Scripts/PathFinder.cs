@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 using Utils;
 
@@ -69,16 +71,25 @@ public class PathFinder : MonoBehaviour
         visited.Add(startPos);
         cameFrom[startPos] = startPos;
 
+        Stopwatch stopwatch = new();
+        stopwatch.Start();
+
+        float totalWaitTime = 0f;
+
         while (queue.Count > 0)
         {
             Vector2Int current = queue.Dequeue();
 
             VisualizeVisited(current);
             yield return new WaitForSeconds(visualizationDelay);
+            totalWaitTime += visualizationDelay;
+
             if (current == endPos)
             {
+                stopwatch.Stop();
                 yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                 isSearching = false;
+                buttonHelper.LogWarning($"[{System.DateTime.Now}] BFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                 yield break;
             }
 
@@ -93,7 +104,9 @@ public class PathFinder : MonoBehaviour
             }
         }
 
+        stopwatch.Stop();
         buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with BFS");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] BFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
         isSearching = false;
     }
 
@@ -107,6 +120,11 @@ public class PathFinder : MonoBehaviour
 
         stack.Push(startPos);
 
+        Stopwatch stopwatch = new();
+        stopwatch.Start();
+
+        float totalWaitTime = 0f;
+
         while (stack.Count > 0)
         {
             Vector2Int current = stack.Pop();
@@ -117,6 +135,7 @@ public class PathFinder : MonoBehaviour
                 VisualizeVisited(current);
 
                 yield return new WaitForSeconds(visualizationDelay);
+                totalWaitTime += visualizationDelay;
 
                 List<Vector2Int> neighbors = gridManager.GetValidNeighbors(current, Tile.TileType.Path);
 
@@ -127,8 +146,10 @@ public class PathFinder : MonoBehaviour
                     if (neighbor == endPos)
                     {
                         cameFrom[neighbor] = current;
+                        stopwatch.Stop();
                         yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                         isSearching = false;
+                        buttonHelper.LogWarning($"[{System.DateTime.Now}] DFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                         yield break;
                     }
 
@@ -141,7 +162,9 @@ public class PathFinder : MonoBehaviour
             }
         }
 
+        stopwatch.Stop();
         buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with DFS");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] DFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
         isSearching = false;
     }
 
@@ -158,16 +181,25 @@ public class PathFinder : MonoBehaviour
         cameFrom[startPos] = startPos;
         costSoFar[startPos] = 0;
 
+        Stopwatch stopwatch = new();
+        stopwatch.Start();
+
+        float totalWaitTime = 0f;
+
         while (frontier.Count > 0)
         {
             Vector2Int current = frontier.Dequeue();
 
             VisualizeVisited(current);
             yield return new WaitForSeconds(visualizationDelay);
+            totalWaitTime += visualizationDelay;
+
             if (current == endPos)
             {
+                stopwatch.Stop();
                 yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                 isSearching = false;
+                buttonHelper.LogWarning($"[{System.DateTime.Now}] Dijkstra execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                 yield break;
             }
 
@@ -185,7 +217,9 @@ public class PathFinder : MonoBehaviour
             }
         }
 
+        stopwatch.Stop();
         buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with Dijkstra");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] Dijkstra execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
         isSearching = false;
     }
 
@@ -202,17 +236,25 @@ public class PathFinder : MonoBehaviour
         cameFrom[startPos] = startPos;
         costSoFar[startPos] = 0;
 
+        Stopwatch stopwatch = new();
+        stopwatch.Start();
+
+        float totalWaitTime = 0f;
+
         while (frontier.Count > 0)
         {
             Vector2Int current = frontier.Dequeue();
 
             VisualizeVisited(current);
             yield return new WaitForSeconds(visualizationDelay);
+            totalWaitTime += visualizationDelay;
 
             if (current == endPos)
             {
+                stopwatch.Stop();
                 yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                 isSearching = false;
+                buttonHelper.LogWarning($"[{System.DateTime.Now}] A* execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                 yield break;
             }
 
@@ -231,7 +273,9 @@ public class PathFinder : MonoBehaviour
             }
         }
 
+        stopwatch.Stop();
         buttonHelper.LogWarning($"[{System.DateTime.Now}] No path found with A*");
+        buttonHelper.LogWarning($"[{System.DateTime.Now}] A* execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
         isSearching = false;
     }
 
