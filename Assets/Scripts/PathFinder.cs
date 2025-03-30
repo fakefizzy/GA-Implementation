@@ -81,15 +81,16 @@ public class PathFinder : MonoBehaviour
             Vector2Int current = queue.Dequeue();
 
             VisualizeVisited(current);
-            yield return new WaitForSeconds(visualizationDelay);
-            totalWaitTime += visualizationDelay;
+            //yield return new WaitForSeconds(visualizationDelay);
+            //totalWaitTime += visualizationDelay;
 
             if (current == endPos)
             {
                 stopwatch.Stop();
+                buttonHelper.LogWarning($"[{System.DateTime.Now}] BFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 100000f, 0)} microseconds");
+
                 yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                 isSearching = false;
-                buttonHelper.LogWarning($"[{System.DateTime.Now}] BFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                 yield break;
             }
 
@@ -134,8 +135,8 @@ public class PathFinder : MonoBehaviour
                 visited.Add(current);
                 VisualizeVisited(current);
 
-                yield return new WaitForSeconds(visualizationDelay);
-                totalWaitTime += visualizationDelay;
+                //yield return new WaitForSeconds(visualizationDelay);
+                //totalWaitTime += visualizationDelay;
 
                 List<Vector2Int> neighbors = gridManager.GetValidNeighbors(current, Tile.TileType.Path);
 
@@ -147,9 +148,9 @@ public class PathFinder : MonoBehaviour
                     {
                         cameFrom[neighbor] = current;
                         stopwatch.Stop();
+                        buttonHelper.LogWarning($"[{System.DateTime.Now}] DFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 100000f, 0)} microseconds");
                         yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                         isSearching = false;
-                        buttonHelper.LogWarning($"[{System.DateTime.Now}] DFS execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                         yield break;
                     }
 
@@ -191,15 +192,15 @@ public class PathFinder : MonoBehaviour
             Vector2Int current = frontier.Dequeue();
 
             VisualizeVisited(current);
-            yield return new WaitForSeconds(visualizationDelay);
-            totalWaitTime += visualizationDelay;
+            //yield return new WaitForSeconds(visualizationDelay);
+            //totalWaitTime += visualizationDelay;
 
             if (current == endPos)
             {
                 stopwatch.Stop();
+                buttonHelper.LogWarning($"[{System.DateTime.Now}] Dijkstra execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 100000f, 0)} microseconds");
                 yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                 isSearching = false;
-                buttonHelper.LogWarning($"[{System.DateTime.Now}] Dijkstra execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                 yield break;
             }
 
@@ -246,15 +247,15 @@ public class PathFinder : MonoBehaviour
             Vector2Int current = frontier.Dequeue();
 
             VisualizeVisited(current);
-            yield return new WaitForSeconds(visualizationDelay);
-            totalWaitTime += visualizationDelay;
+            //yield return new WaitForSeconds(visualizationDelay);
+            //totalWaitTime += visualizationDelay;
 
             if (current == endPos)
             {
                 stopwatch.Stop();
+                buttonHelper.LogWarning($"[{System.DateTime.Now}] A* execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 100000f, 0)} microseconds");
                 yield return StartCoroutine(VisualizePath(ReconstructPath(cameFrom, startPos, endPos)));
                 isSearching = false;
-                buttonHelper.LogWarning($"[{System.DateTime.Now}] A* execution time: {Math.Round(((float)stopwatch.Elapsed.TotalSeconds - totalWaitTime) * 1000f, 0)} ms");
                 yield break;
             }
 
@@ -369,7 +370,7 @@ public class PathFinder : MonoBehaviour
 
     public void SetVisualizationSpeed(float speedMultiplier)
     {
-        speedMultiplier = Mathf.Clamp(speedMultiplier, 0.1f, 150f);
+        speedMultiplier = Mathf.Clamp(speedMultiplier, 5f, 600f);
         visualizationDelay = 0.5f / speedMultiplier;
     }
 
